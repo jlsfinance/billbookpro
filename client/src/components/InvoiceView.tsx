@@ -203,18 +203,23 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
       doc.setFontSize(8);
       doc.setTextColor(60);
       
+      const hasHSN = invoice.items.some(i => i.hsn);
       const colX = {
         idx: leftMargin + 5,
         desc: leftMargin + 15,
-        qty: rightMargin - 65,
-        rate: rightMargin - 35,
+        hsn: leftMargin + 60,
+        qty: rightMargin - (invoice.gstEnabled ? 75 : 65),
+        rate: rightMargin - (invoice.gstEnabled ? 45 : 35),
+        gst: rightMargin - 20,
         amount: rightMargin - 5
       };
 
       doc.text("#", colX.idx, yPos + 5);
       doc.text("DESCRIPTION", colX.desc, yPos + 5);
+      if (hasHSN) doc.text("HSN", colX.hsn, yPos + 5);
       doc.text("QTY", colX.qty, yPos + 5, { align: "right" });
       doc.text("RATE", colX.rate, yPos + 5, { align: "right" });
+      if (invoice.gstEnabled) doc.text("GST%", colX.gst, yPos + 5, { align: "right" });
       doc.text("AMOUNT", colX.amount, yPos + 5, { align: "right" });
       
       yPos += 8;
@@ -236,10 +241,13 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
 
         doc.text(`${i + 1}`, colX.idx, yPos + 5);
         doc.text(item.description, colX.desc, yPos + 5);
+        if (hasHSN) doc.text(item.hsn || '-', colX.hsn, yPos + 5);
         doc.text(item.quantity.toString(), colX.qty, yPos + 5, { align: "right" });
         doc.text(`Rs. ${item.rate.toFixed(2)}`, colX.rate, yPos + 5, { align: "right" });
+        if (invoice.gstEnabled) doc.text(`${((item.gstRate || 0)).toFixed(1)}%`, colX.gst, yPos + 5, { align: "right" });
         doc.setFont("helvetica", "bold");
-        doc.text(`Rs. ${item.amount.toFixed(2)}`, colX.amount, yPos + 5, { align: "right" });
+        const amountWithGST = item.amount + (item.gstAmount || 0);
+        doc.text(`Rs. ${amountWithGST.toFixed(2)}`, colX.amount, yPos + 5, { align: "right" });
         doc.setFont("helvetica", "normal");
 
         // Light border line
@@ -261,6 +269,17 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
       doc.setFont("helvetica", "normal");
       doc.text(`Rs. ${invoice.subtotal.toFixed(2)}`, totalXValue, yPos + 5, { align: "right" });
       yPos += 7;
+
+      // GST
+      if (invoice.gstEnabled && invoice.gstAmount && invoice.gstAmount > 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(34, 197, 94);
+        doc.text("GST:", totalXLabel, yPos + 5, { align: "right" });
+        doc.setFont("helvetica", "normal");
+        doc.text(`Rs. ${invoice.gstAmount.toFixed(2)}`, totalXValue, yPos + 5, { align: "right" });
+        doc.setTextColor(0);
+        yPos += 7;
+      }
 
       // Current Invoice Total
       doc.setDrawColor(0);
@@ -537,18 +556,27 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
               <tr className="border-t border-b border-black bg-gray-50">
                 <th className="py-1.5 text-left w-10 pl-2">#</th>
                 <th className="py-1.5 text-left">Description</th>
-                <th className="py-1.5 text-right w-20">Qty</th>
-                <th className="py-1.5 text-right w-28">Rate</th>
-                <th className="py-1.5 text-right w-28 pr-2">Amount</th>
+                {(invoice.items.some(i => i.hsn)) && <th className="py-1.5 text-center w-20">HSN</th>}
+                <th className="py-1.5 text-right w-16">Qty</th>
+                <th className="py-1.5 text-right w-20">Rate</th>
+                {invoice.gstEnabled && <th className="py-1.5 text-right w-16">GST %</th>}
+                <th className="py-1.5 text-right w-24 pr-2">Amount</th>
               </tr>
             </thead>
             <tbody>
               {invoice.items.map((item, idx) => (
                 <tr key={idx} className="border-b border-gray-100">
                   <td className="py-1.5 pl-2 align-top text-xs text-gray-500">{idx + 1}</td>
-                  <td className="py-1.5 align-top text-gray-900 font-medium">{item.description}</td>
+                  <td className="py-1.5 align-top text-gray-900 font-medium">
+                    {item.description}
+                    {item.gstAmount && item.gstAmount > 0 && (
+                      <div className="text-xs text-green-600 font-normal">+₹{item.gstAmount.toFixed(2)} GST</div>
+                    )}
+                  </td>
+                  {(invoice.items.some(i => i.hsn)) && <td className="py-1.5 align-top text-center text-xs text-gray-600">{item.hsn || '-'}</td>}
                   <td className="py-1.5 align-top text-right">{item.quantity}</td>
                   <td className="py-1.5 align-top text-right">Rs. {item.rate.toFixed(2)}</td>
+                  {invoice.gstEnabled && <td className="py-1.5 align-top text-right">{((item.gstRate || 0)).toFixed(1)}%</td>}
                   <td className="py-1.5 pr-2 align-top text-right font-bold">Rs. {item.amount.toFixed(2)}</td>
                 </tr>
               ))}
@@ -562,6 +590,12 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
                 <span className="font-medium text-gray-600">Subtotal:</span>
                 <span className="font-medium">Rs. {invoice.subtotal.toFixed(2)}</span>
               </div>
+              {invoice.gstEnabled && invoice.gstAmount && invoice.gstAmount > 0 && (
+                <div className="flex justify-between py-1 border-b border-gray-200 text-sm">
+                  <span className="font-medium text-green-600">GST:</span>
+                  <span className="font-medium text-green-600">Rs. {invoice.gstAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className={`flex justify-between py-2 ${showPreviousBalance ? 'border-b border-gray-200' : 'border-b border-black'} text-lg`}>
                 <span className="font-bold">Invoice Total:</span>
                 <span className="font-bold">Rs. {invoice.total.toFixed(2)}</span>
