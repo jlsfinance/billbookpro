@@ -12,8 +12,15 @@ import { StorageService } from './services/storageService';
 import { FirebaseService } from './services/firebaseService';
 import { WhatsAppService } from './services/whatsappService';
 import { ArrowRight, DollarSign, Package, Users, Edit, Loader2, MessageCircle } from 'lucide-react';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { CompanyProvider, useCompany } from '@/contexts/CompanyContext';
+import { CompanyForm } from '@/components/CompanyForm';
+import Auth from '@/components/Auth';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
+  const { company, loading: companyLoading } = useCompany();
+  
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
@@ -213,6 +220,24 @@ const App: React.FC = () => {
     </div>
   );
 
+  // Auth & Loading States
+  if (authLoading || (user && companyLoading)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 flex-col gap-4">
+          <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+          <p className="text-slate-500 font-medium">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth />;
+  }
+
+  if (!company) {
+    return <CompanyForm />;
+  }
+
   if (isInitializing) {
       return (
           <div className="flex h-screen w-full items-center justify-center bg-slate-50 flex-col gap-4">
@@ -231,7 +256,7 @@ const App: React.FC = () => {
           if (view === ViewState.CREATE_INVOICE) setInvoiceToEdit(null);
           setCurrentView(view);
         }}
-        isCloudConnected={isCloudConnected}
+        isCloudConnected={isCloudConnected || !!user} // Show cloud connected if logged in
       />
       
       {/* Added padding bottom (pb-20) for mobile to account for fixed navbar */}
@@ -267,6 +292,16 @@ const App: React.FC = () => {
         )}
       </main>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <CompanyProvider>
+        <AppContent />
+      </CompanyProvider>
+    </AuthProvider>
   );
 };
 

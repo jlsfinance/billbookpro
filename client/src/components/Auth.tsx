@@ -1,13 +1,9 @@
-
 import React, { useState } from 'react';
-import { AuthService } from '../services/authService';
+import { useAuth } from '@/contexts/AuthContext';
 import { Receipt, Lock, Mail, UserPlus, LogIn, AlertTriangle } from 'lucide-react';
 
-interface AuthProps {
-  onLoginSuccess: () => void;
-}
-
-const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
+export const Auth = () => {
+  const { signIn, signUp } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,18 +17,18 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
 
     try {
       if (isLogin) {
-        await AuthService.login(email, password);
+        await signIn(email, password);
       } else {
-        await AuthService.register(email, password);
+        await signUp(email, password);
       }
-      onLoginSuccess();
     } catch (err: any) {
       console.error("Auth Error:", err);
       let msg = "Authentication failed.";
-      if (err.message.includes("auth/invalid-email")) msg = "Invalid email address.";
-      if (err.message.includes("auth/user-not-found")) msg = "User not found.";
-      if (err.message.includes("auth/wrong-password")) msg = "Incorrect password.";
-      if (err.message.includes("auth/email-already-in-use")) msg = "Email already registered.";
+      if (err.message?.includes("auth/invalid-email")) msg = "Invalid email address.";
+      if (err.message?.includes("auth/user-not-found") || err.message?.includes("auth/invalid-credential")) msg = "Invalid email or password.";
+      if (err.message?.includes("auth/wrong-password")) msg = "Incorrect password.";
+      if (err.message?.includes("auth/email-already-in-use")) msg = "Email already registered.";
+      if (err.message?.includes("auth/weak-password")) msg = "Password should be at least 6 characters.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -131,7 +127,7 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 grid grid-cols-1 gap-3">
                 <button
                     onClick={() => {
                         setIsLogin(!isLogin);
@@ -140,12 +136,6 @@ const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
                     className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                 >
                     {isLogin ? <><UserPlus className="w-4 h-4 mr-2" /> Sign Up</> : <><LogIn className="w-4 h-4 mr-2" /> Login</>}
-                </button>
-                <button
-                    onClick={onLoginSuccess}
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                   Skip (Guest)
                 </button>
             </div>
           </div>
