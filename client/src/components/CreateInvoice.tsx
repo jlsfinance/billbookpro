@@ -240,7 +240,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
       customerAddress: customer.address,
       customerState: customer.state,
       customerGstin: customer.gstin,
-      supplierGstin: supplier?.gst,
+      supplierGstin: supplier?.gstin,
       taxType: taxType,
       date,
       dueDate,
