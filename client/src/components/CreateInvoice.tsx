@@ -20,6 +20,10 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   const [dueDate, setDueDate] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
   
+  // GST States
+  const [gstEnabled, setGstEnabled] = useState(false);
+  const [gstRate, setGstRate] = useState(18);
+  
   // New State for Payment Mode
   const [paymentMode, setPaymentMode] = useState<'CREDIT' | 'CASH'>('CREDIT');
 
@@ -95,7 +99,18 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const calculateTotal = () => items.reduce((sum, item) => sum + item.amount, 0);
+  const calculateSubtotal = () => items.reduce((sum, item) => sum + item.amount, 0);
+  
+  const calculateGST = () => {
+    if (!gstEnabled) return 0;
+    return calculateSubtotal() * (gstRate / 100);
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const gst = calculateGST();
+    return subtotal + gst;
+  };
 
   // --- Inline Creation Handlers ---
   const handleCreateCustomer = (nameQuery: string) => {

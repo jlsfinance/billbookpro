@@ -77,6 +77,9 @@ export interface Invoice {
   items: InvoiceItem[];
   subtotal: number;
   tax: number; // Simple tax implementation
+  gstEnabled?: boolean;
+  gstRate?: number;
+  gstAmount?: number;
   total: number;
   status: 'PAID' | 'PENDING' | 'OVERDUE';
 }
@@ -86,6 +89,8 @@ export interface CompanyProfile {
   address: string;
   phone: string;
   email: string;
+  gst?: string;
+  gst_enabled?: boolean;
 }
 
 // Mock Data Defaults
