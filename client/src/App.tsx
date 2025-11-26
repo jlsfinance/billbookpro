@@ -31,7 +31,7 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-        await StorageService.init();
+        await StorageService.init(user?.uid || null);
         setInvoices(StorageService.getInvoices());
         
         // Check cloud status
@@ -42,7 +42,7 @@ const AppContent: React.FC = () => {
         setIsInitializing(false);
     };
     initApp();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!isInitializing) {
