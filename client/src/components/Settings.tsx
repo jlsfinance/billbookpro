@@ -15,12 +15,6 @@ const Settings: React.FC = () => {
     email: ''
   });
 
-  return (
-    <div className="p-4 md:p-6">
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800 font-medium">💡 Pro Tip: Add your company details below to automatically include them in invoices, print layouts, and WhatsApp messages!</p>
-      </div>
-  
   const [firebaseConfig, setFirebaseConfig] = useState<FirebaseConfig>({
     apiKey: '', authDomain: '', projectId: '', storageBucket: '', messagingSenderId: '', appId: ''
   });
