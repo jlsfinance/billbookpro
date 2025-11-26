@@ -20,6 +20,8 @@ const Settings: React.FC = () => {
   });
 
   const [isSaved, setIsSaved] = useState(false);
+  const [gstEnabled, setGstEnabled] = useState(company?.gst_enabled ?? true);
+  const [gstNumber, setGstNumber] = useState(company?.gst ?? '');
   const [importStatus, setImportStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [isFirebaseReady, setIsFirebaseReady] = useState(false);
   const [showAutoFill, setShowAutoFill] = useState(false);
@@ -37,6 +39,8 @@ const Settings: React.FC = () => {
             phone: company.phone || '',
             email: company.email || ''
         });
+        setGstEnabled(company.gst_enabled ?? true);
+        setGstNumber(company.gst || '');
     } else {
         // Fallback to local storage
         const currentProfile = StorageService.getCompanyProfile();
@@ -70,8 +74,8 @@ const Settings: React.FC = () => {
             address: profile.address,
             phone: profile.phone,
             email: profile.email,
-            gst: company?.gst || '', // Preserve existing fields
-            gst_enabled: company?.gst_enabled ?? true
+            gst: gstNumber,
+            gst_enabled: gstEnabled
         });
         
         // Also update local storage for offline backup
@@ -180,6 +184,30 @@ const Settings: React.FC = () => {
                 </h3>
             </div>
             <div className="p-6 space-y-6">
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={gstEnabled}
+                      onChange={(e) => setGstEnabled(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm font-medium text-blue-900">Enable GST for Invoices</span>
+                  </label>
+                  <p className="text-xs text-blue-700 mt-2">When enabled, GST rate can be set per item in invoices</p>
+                </div>
+                {gstEnabled && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">GST Number</label>
+                    <input
+                      type="text"
+                      value={gstNumber}
+                      onChange={(e) => setGstNumber(e.target.value)}
+                      placeholder="Your GST Registration Number"
+                      className="w-full rounded-md border border-slate-300 p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>

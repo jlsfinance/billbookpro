@@ -6,6 +6,7 @@ import { GeminiService } from '../services/geminiService';
 import { WhatsAppService } from '../services/whatsappService';
 import { Printer, ArrowLeft, Play, Loader2, Download, Edit, Trash2, AlertTriangle, Settings, FilePlus, History, Check, MessageCircle } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface InvoiceViewProps {
   invoice: Invoice;
@@ -42,6 +43,7 @@ const numberToWords = (n: number): string => {
 };
 
 const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) => {
+  const { company: firebaseCompany } = useCompany();
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [company, setCompany] = useState<CompanyProfile>(DEFAULT_COMPANY);
@@ -54,10 +56,20 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
   const [showOptions, setShowOptions] = useState(false);
 
   useEffect(() => {
-    setCompany(StorageService.getCompanyProfile());
+    if (firebaseCompany?.name) {
+      setCompany({
+        name: firebaseCompany.name || '',
+        address: firebaseCompany.address || '',
+        phone: firebaseCompany.phone || '',
+        email: firebaseCompany.email || '',
+        gst: firebaseCompany.gst || ''
+      });
+    } else {
+      setCompany(StorageService.getCompanyProfile());
+    }
     const foundCustomer = StorageService.getCustomers().find(c => c.id === invoice.customerId);
     setCustomer(foundCustomer || null);
-  }, [invoice]);
+  }, [invoice, firebaseCompany]);
 
   const handlePrint = () => {
     window.print();

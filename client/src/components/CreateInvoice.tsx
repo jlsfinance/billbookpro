@@ -4,6 +4,7 @@ import { Customer, Product, Invoice, InvoiceItem } from '../types';
 import { StorageService } from '../services/storageService';
 import { Plus, Trash2, Save, X, CreditCard, Banknote } from 'lucide-react';
 import Autocomplete from './Autocomplete';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface CreateInvoiceProps {
   onSave: (invoice: Invoice) => void;
@@ -12,6 +13,7 @@ interface CreateInvoiceProps {
 }
 
 const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initialInvoice }) => {
+  const { company } = useCompany();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   
@@ -20,9 +22,8 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   const [dueDate, setDueDate] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([]);
   
-  // GST States
-  const [gstEnabled, setGstEnabled] = useState(false);
-  const [gstRate, setGstRate] = useState(18);
+  // GST States - Read from company context
+  const gstEnabled = company?.gst_enabled ?? true;
   
   // New State for Payment Mode
   const [paymentMode, setPaymentMode] = useState<'CREDIT' | 'CASH'>('CREDIT');
@@ -58,7 +59,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   }, [initialInvoice]);
 
   const handleAddItem = () => {
-    setItems([...items, { productId: '', description: '', quantity: 1, rate: 0, amount: 0, gstRate: 0, gstAmount: 0 }]);
+    setItems([...items, { productId: '', description: '', quantity: 1, rate: 0, amount: 0, hsn: '', gstRate: gstEnabled ? gstRate : 0, gstAmount: 0 }]);
   };
 
   const handleUpdateItem = (index: number, field: keyof InvoiceItem, value: any) => {
@@ -92,6 +93,8 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
     } else if (field === 'gstRate') {
       item.gstRate = Number(value);
       item.gstAmount = item.amount * (item.gstRate / 100);
+    } else if (field === 'hsn') {
+      item.hsn = value;
     } else {
       // @ts-ignore
       item[field] = value;
@@ -298,11 +301,12 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3 w-1/3">Product</th>
-                  <th className="px-4 py-3 w-20">Qty</th>
-                  <th className="px-4 py-3 w-24">Rate</th>
-                  <th className="px-4 py-3 w-24">GST %</th>
-                  <th className="px-4 py-3 w-28">Amount</th>
+                  <th className="px-4 py-3 w-1/4">Product</th>
+                  <th className="px-4 py-3 w-20">HSN Code</th>
+                  <th className="px-4 py-3 w-16">Qty</th>
+                  <th className="px-4 py-3 w-20">Rate</th>
+                  {gstEnabled && <th className="px-4 py-3 w-16">GST %</th>}
+                  <th className="px-4 py-3 w-24">Amount</th>
                   <th className="px-4 py-3 w-16"></th>
                 </tr>
               </thead>
@@ -329,6 +333,15 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
                     </td>
                     <td className="px-4 py-2 align-top">
                       <input
+                        type="text"
+                        className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        value={item.hsn || ''}
+                        onChange={(e) => handleUpdateItem(idx, 'hsn', e.target.value)}
+                        placeholder="HSN Code"
+                      />
+                    </td>
+                    <td className="px-4 py-2 align-top">
+                      <input
                         type="number"
                         min="1"
                         className="w-full p-2 border rounded text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -344,7 +357,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
                         onChange={(e) => handleUpdateItem(idx, 'rate', e.target.value)}
                       />
                     </td>
-                    <td className="px-4 py-2 align-top">
+                    {gstEnabled && <td className="px-4 py-2 align-top">
                       <input
                         type="number"
                         min="0"
@@ -355,7 +368,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
                         onChange={(e) => handleUpdateItem(idx, 'gstRate', e.target.value)}
                         placeholder="0"
                       />
-                    </td>
+                    </td>}
                     <td className="px-4 py-2 text-right font-medium text-slate-700 align-top pt-3">
                       <div className="text-sm">₹{item.amount.toFixed(2)}</div>
                       <div className="text-xs text-green-600">+₹{(item.gstAmount || 0).toFixed(2)}</div>
