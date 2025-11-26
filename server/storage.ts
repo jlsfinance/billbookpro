@@ -270,7 +270,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Payments
-  async getPayments(userId: string): Promise<Payment[]> {
+  async getPayments(userId: string): Promise<any[]> {
     const allPayments = await db
       .select()
       .from(payments)
@@ -283,7 +283,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async createPayment(payment: InsertPayment): Promise<Payment> {
+  async createPayment(payment: InsertPayment): Promise<any> {
     const [newPayment] = await db
       .insert(payments)
       .values(payment)
