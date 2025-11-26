@@ -85,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isCloudCon
             <button
               key={item.id}
               onClick={() => onChangeView(item.id)}
-              className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+              className={`flex flex-col items-center justify-center flex-1 h-full space-y-1 ${
                 currentView === item.id ? 'text-blue-400' : 'text-slate-400'
               }`}
             >
@@ -93,6 +93,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isCloudCon
               <span className="text-[10px] font-medium">{item.label}</span>
             </button>
           ))}
+          <button
+            onClick={handleLogout}
+            className="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-slate-400 hover:text-red-400 transition-colors"
+            data-testid="button-logout-mobile"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Logout</span>
+          </button>
         </div>
       </div>
     </>
