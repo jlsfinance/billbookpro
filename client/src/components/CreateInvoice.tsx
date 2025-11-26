@@ -58,7 +58,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   }, [initialInvoice]);
 
   const handleAddItem = () => {
-    setItems([...items, { productId: '', description: '', quantity: 1, rate: 0, amount: 0 }]);
+    setItems([...items, { productId: '', description: '', quantity: 1, rate: 0, amount: 0, gstRate: 0, gstAmount: 0 }]);
   };
 
   const handleUpdateItem = (index: number, field: keyof InvoiceItem, value: any) => {
@@ -87,6 +87,11 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
       // @ts-ignore
       item[field] = Number(value);
       item.amount = item.quantity * item.rate;
+      // Recalculate GST amount when amount changes
+      item.gstAmount = item.amount * ((item.gstRate || 0) / 100);
+    } else if (field === 'gstRate') {
+      item.gstRate = Number(value);
+      item.gstAmount = item.amount * (item.gstRate / 100);
     } else {
       // @ts-ignore
       item[field] = value;
@@ -102,8 +107,8 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   const calculateSubtotal = () => items.reduce((sum, item) => sum + item.amount, 0);
   
   const calculateGST = () => {
-    if (!gstEnabled) return 0;
-    return calculateSubtotal() * (gstRate / 100);
+    // Sum GST from all items
+    return items.reduce((sum, item) => sum + (item.gstAmount || 0), 0);
   };
 
   const calculateTotal = () => {
@@ -184,6 +189,9 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
     // Cash -> PAID (Settled)
     const status = paymentMode === 'CASH' ? 'PAID' : 'PENDING';
 
+    const subtotal = calculateSubtotal();
+    const totalGST = calculateGST();
+    
     const invoiceData: Invoice = {
       id: initialInvoice ? initialInvoice.id : crypto.randomUUID(),
       invoiceNumber: initialInvoice ? initialInvoice.invoiceNumber : `INV-2025-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
@@ -193,9 +201,11 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
       date,
       dueDate,
       items,
-      subtotal: total,
+      subtotal: subtotal,
       tax: 0,
-      total: total,
+      gstEnabled: items.some(i => (i.gstRate || 0) > 0),
+      gstAmount: totalGST,
+      total: calculateTotal(),
       status: status
     };
 
@@ -289,9 +299,10 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
               <thead>
                 <tr className="bg-slate-50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="px-4 py-3 w-1/3">Product</th>
-                  <th className="px-4 py-3 w-24">Qty</th>
-                  <th className="px-4 py-3 w-32">Rate</th>
-                  <th className="px-4 py-3 w-32">Amount</th>
+                  <th className="px-4 py-3 w-20">Qty</th>
+                  <th className="px-4 py-3 w-24">Rate</th>
+                  <th className="px-4 py-3 w-24">GST %</th>
+                  <th className="px-4 py-3 w-28">Amount</th>
                   <th className="px-4 py-3 w-16"></th>
                 </tr>
               </thead>
@@ -333,8 +344,21 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
                         onChange={(e) => handleUpdateItem(idx, 'rate', e.target.value)}
                       />
                     </td>
+                    <td className="px-4 py-2 align-top">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        className="w-full p-2 border rounded text-right focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        value={item.gstRate || 0}
+                        onChange={(e) => handleUpdateItem(idx, 'gstRate', e.target.value)}
+                        placeholder="0"
+                      />
+                    </td>
                     <td className="px-4 py-2 text-right font-medium text-slate-700 align-top pt-3">
-                      ₹{item.amount.toFixed(2)}
+                      <div className="text-sm">₹{item.amount.toFixed(2)}</div>
+                      <div className="text-xs text-green-600">+₹{(item.gstAmount || 0).toFixed(2)}</div>
                     </td>
                     <td className="px-4 py-2 text-center align-top pt-3">
                       <button
@@ -360,10 +384,20 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
           <Plus className="w-4 h-4" /> Add Item
         </button>
 
-        <div className="flex justify-end border-t pt-4">
-           <div className="text-right">
-               <span className="text-gray-500 mr-4">Total Amount:</span>
-               <span className="text-2xl font-bold text-slate-900">₹{calculateTotal().toFixed(2)}</span>
+        <div className="flex justify-end border-t pt-4 pb-4">
+           <div className="text-right space-y-2">
+               <div className="flex justify-end gap-4">
+                 <span className="text-gray-500">Subtotal:</span>
+                 <span className="text-slate-900 w-32">₹{calculateSubtotal().toFixed(2)}</span>
+               </div>
+               <div className="flex justify-end gap-4">
+                 <span className="text-green-600 font-medium">GST (per item):</span>
+                 <span className="text-green-600 w-32">₹{calculateGST().toFixed(2)}</span>
+               </div>
+               <div className="flex justify-end gap-4 border-t pt-2">
+                 <span className="text-slate-900 font-bold">Total:</span>
+                 <span className="text-2xl font-bold text-slate-900 w-32">₹{calculateTotal().toFixed(2)}</span>
+               </div>
            </div>
         </div>
 

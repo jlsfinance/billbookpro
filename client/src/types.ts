@@ -64,6 +64,8 @@ export interface InvoiceItem {
   quantity: number;
   rate: number;
   amount: number;
+  gstRate?: number;
+  gstAmount?: number;
 }
 
 export interface Invoice {
