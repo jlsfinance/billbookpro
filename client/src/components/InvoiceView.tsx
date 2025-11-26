@@ -14,6 +14,34 @@ interface InvoiceViewProps {
   onEdit: (invoice: Invoice) => void;
 }
 
+// Helper to group items by HSN and calculate totals
+const getHSNSummary = (invoice: Invoice, company: CompanyProfile) => {
+  const hsnGroups: Record<string, any> = {};
+  
+  invoice.items.forEach(item => {
+    const hsn = item.hsn || 'N/A';
+    if (!hsnGroups[hsn]) {
+      hsnGroups[hsn] = {
+        hsn,
+        description: item.description,
+        quantity: 0,
+        baseAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        igstAmount: 0,
+        gstRate: item.gstRate || 0
+      };
+    }
+    hsnGroups[hsn].quantity += item.quantity;
+    hsnGroups[hsn].baseAmount += item.baseAmount || 0;
+    hsnGroups[hsn].cgstAmount += item.cgstAmount || 0;
+    hsnGroups[hsn].sgstAmount += item.sgstAmount || 0;
+    hsnGroups[hsn].igstAmount += item.igstAmount || 0;
+  });
+
+  return Object.values(hsnGroups);
+};
+
 // Helper for Amount in Words
 const numberToWords = (n: number): string => {
     const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
@@ -331,6 +359,62 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
           doc.text("Previous Balance:", totalXLabel, yPos + 5, { align: "right" });
           doc.text(`Rs. ${previousBalance.toFixed(2)}`, totalXValue, yPos + 5, { align: "right" });
           yPos += 8;
+      }
+
+      // --- HSN SUMMARY (for GST invoices) ---
+      if (invoice.gstEnabled) {
+        yPos += 8;
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("HSN-WISE TAX SUMMARY", leftMargin, yPos);
+        yPos += 6;
+
+        const hsnSummary = getHSNSummary(invoice, company);
+        const colWidths = { hsn: 20, desc: 50, qty: 15, taxVal: 30, cgst: 20, sgst: 20, igst: 20, tax: 25 };
+        const colStart = { hsn: leftMargin, desc: leftMargin + colWidths.hsn, qty: leftMargin + colWidths.hsn + colWidths.desc, taxVal: leftMargin + colWidths.hsn + colWidths.desc + colWidths.qty, cgst: 0, sgst: 0, igst: 0, tax: rightMargin - 25 };
+
+        // Header
+        doc.setFillColor(240, 240, 240);
+        doc.rect(leftMargin, yPos - 4, rightMargin - leftMargin, 6, 'F');
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("HSN", colStart.hsn, yPos);
+        doc.text("Description", colStart.desc, yPos);
+        doc.text("Qty", colStart.qty, yPos, { align: "right" });
+        doc.text("Taxable Val", colStart.taxVal, yPos, { align: "right" });
+        if ((invoice.totalCgst || 0) > 0) doc.text("CGST", rightMargin - 70, yPos, { align: "right" });
+        if ((invoice.totalSgst || 0) > 0) doc.text("SGST", rightMargin - 45, yPos, { align: "right" });
+        if ((invoice.totalIgst || 0) > 0) doc.text("IGST", rightMargin - 45, yPos, { align: "right" });
+        doc.text("Total Tax", rightMargin - 5, yPos, { align: "right" });
+        
+        yPos += 7;
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+
+        // Rows
+        hsnSummary.forEach(group => {
+          const totalTax = group.cgstAmount + group.sgstAmount + group.igstAmount;
+          doc.text((group.hsn || 'N/A').substring(0, 10), colStart.hsn, yPos);
+          doc.text(group.description.substring(0, 25), colStart.desc, yPos);
+          doc.text(group.quantity.toString(), colStart.qty, yPos, { align: "right" });
+          doc.text(`${group.baseAmount.toFixed(2)}`, colStart.taxVal, yPos, { align: "right" });
+          if ((invoice.totalCgst || 0) > 0) doc.text(`${group.cgstAmount.toFixed(2)}`, rightMargin - 70, yPos, { align: "right" });
+          if ((invoice.totalSgst || 0) > 0) doc.text(`${group.sgstAmount.toFixed(2)}`, rightMargin - 45, yPos, { align: "right" });
+          if ((invoice.totalIgst || 0) > 0) doc.text(`${group.igstAmount.toFixed(2)}`, rightMargin - 45, yPos, { align: "right" });
+          doc.text(`${totalTax.toFixed(2)}`, rightMargin - 5, yPos, { align: "right" });
+          yPos += 6;
+        });
+
+        // Total row
+        doc.setFont("helvetica", "bold");
+        doc.line(leftMargin, yPos - 1, rightMargin, yPos - 1);
+        doc.text("TOTAL", colStart.hsn, yPos);
+        doc.text(`${invoice.subtotal.toFixed(2)}`, colStart.taxVal, yPos, { align: "right" });
+        if ((invoice.totalCgst || 0) > 0) doc.text(`${(invoice.totalCgst || 0).toFixed(2)}`, rightMargin - 70, yPos, { align: "right" });
+        if ((invoice.totalSgst || 0) > 0) doc.text(`${(invoice.totalSgst || 0).toFixed(2)}`, rightMargin - 45, yPos, { align: "right" });
+        if ((invoice.totalIgst || 0) > 0) doc.text(`${(invoice.totalIgst || 0).toFixed(2)}`, rightMargin - 45, yPos, { align: "right" });
+        doc.text(`${((invoice.totalCgst || 0) + (invoice.totalSgst || 0) + (invoice.totalIgst || 0)).toFixed(2)}`, rightMargin - 5, yPos, { align: "right" });
+        yPos += 8;
       }
 
       // Amount in Words
@@ -653,6 +737,49 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
               )}
             </div>
           </div>
+
+          {/* HSN Summary Table for GST Invoices */}
+          {invoice.gstEnabled && (
+            <div className="mb-8 overflow-x-auto">
+              <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase">HSN-Wise Tax Summary</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 border border-gray-300">
+                    <th className="border border-gray-300 px-2 py-1 text-left">HSN</th>
+                    <th className="border border-gray-300 px-2 py-1 text-left">Description</th>
+                    <th className="border border-gray-300 px-2 py-1 text-right">Qty</th>
+                    <th className="border border-gray-300 px-2 py-1 text-right">Taxable Value</th>
+                    {(invoice.totalCgst || 0) > 0 && <th className="border border-gray-300 px-2 py-1 text-right">CGST</th>}
+                    {(invoice.totalSgst || 0) > 0 && <th className="border border-gray-300 px-2 py-1 text-right">SGST</th>}
+                    {(invoice.totalIgst || 0) > 0 && <th className="border border-gray-300 px-2 py-1 text-right">IGST</th>}
+                    <th className="border border-gray-300 px-2 py-1 text-right">Total Tax</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getHSNSummary(invoice, company).map((group, idx) => (
+                    <tr key={idx} className="border border-gray-300">
+                      <td className="border border-gray-300 px-2 py-1">{group.hsn}</td>
+                      <td className="border border-gray-300 px-2 py-1">{group.description}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">{group.quantity}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-right">Rs. {group.baseAmount.toFixed(2)}</td>
+                      {(invoice.totalCgst || 0) > 0 && <td className="border border-gray-300 px-2 py-1 text-right">Rs. {group.cgstAmount.toFixed(2)}</td>}
+                      {(invoice.totalSgst || 0) > 0 && <td className="border border-gray-300 px-2 py-1 text-right">Rs. {group.sgstAmount.toFixed(2)}</td>}
+                      {(invoice.totalIgst || 0) > 0 && <td className="border border-gray-300 px-2 py-1 text-right">Rs. {group.igstAmount.toFixed(2)}</td>}
+                      <td className="border border-gray-300 px-2 py-1 text-right font-bold">Rs. {(group.cgstAmount + group.sgstAmount + group.igstAmount).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-gray-100 font-bold border border-gray-300">
+                    <td colSpan={3} className="border border-gray-300 px-2 py-1 text-right">TOTAL:</td>
+                    <td className="border border-gray-300 px-2 py-1 text-right">Rs. {invoice.subtotal.toFixed(2)}</td>
+                    {(invoice.totalCgst || 0) > 0 && <td className="border border-gray-300 px-2 py-1 text-right">Rs. {(invoice.totalCgst || 0).toFixed(2)}</td>}
+                    {(invoice.totalSgst || 0) > 0 && <td className="border border-gray-300 px-2 py-1 text-right">Rs. {(invoice.totalSgst || 0).toFixed(2)}</td>}
+                    {(invoice.totalIgst || 0) > 0 && <td className="border border-gray-300 px-2 py-1 text-right">Rs. {(invoice.totalIgst || 0).toFixed(2)}</td>}
+                    <td className="border border-gray-300 px-2 py-1 text-right">Rs. {((invoice.totalCgst || 0) + (invoice.totalSgst || 0) + (invoice.totalIgst || 0)).toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
           
           {/* Amount in Words */}
           <div className="flex justify-end mb-8 text-right">
