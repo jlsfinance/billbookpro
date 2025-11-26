@@ -218,6 +218,29 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
     if (!customer) return alert('Select a customer');
     if (items.length === 0) return alert('Add at least one item');
 
+    // Validate each item
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.productId || !item.description) return alert(`Item ${i + 1}: Please select a product`);
+      if (!item.quantity || item.quantity <= 0) return alert(`Item ${i + 1}: Quantity must be greater than 0`);
+      if (!item.rate || item.rate <= 0) return alert(`Item ${i + 1}: Rate must be greater than 0`);
+    }
+
+    // Ensure all numeric fields are valid numbers, not NaN or undefined
+    const cleanedItems: InvoiceItem[] = items.map(item => ({
+      productId: item.productId || '',
+      description: item.description || '',
+      quantity: Number(item.quantity) || 1,
+      rate: Number(item.rate) || 0,
+      baseAmount: Number(item.baseAmount) || 0,
+      hsn: item.hsn || '',
+      gstRate: Number(item.gstRate) || 0,
+      cgstAmount: Number(item.cgstAmount) || 0,
+      sgstAmount: Number(item.sgstAmount) || 0,
+      igstAmount: Number(item.igstAmount) || 0,
+      totalAmount: Number(item.totalAmount) || 0
+    }));
+
     const total = calculateTotal();
     
     // Determine Status based on Payment Mode
@@ -230,27 +253,27 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
     const totalSgst = calculateTotalSGST();
     const totalIgst = calculateTotalIGST();
     const supplier = company as any;
-    const taxType = (supplier?.state || 'Delhi') === customer.state ? 'INTRA_STATE' : 'INTER_STATE';
+    const taxType = (supplier?.state || 'Delhi') === (customer.state || '') ? 'INTRA_STATE' : 'INTER_STATE';
     
     const invoiceData: Invoice = {
       id: initialInvoice ? initialInvoice.id : crypto.randomUUID(),
       invoiceNumber: initialInvoice ? initialInvoice.invoiceNumber : `INV-2025-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
       customerId: customer.id,
       customerName: customer.company || customer.name,
-      customerAddress: customer.address,
-      customerState: customer.state,
-      customerGstin: customer.gstin,
-      supplierGstin: supplier?.gstin,
+      customerAddress: customer.address || '',
+      customerState: customer.state || '',
+      customerGstin: customer.gstin || '',
+      supplierGstin: supplier?.gstin || '',
       taxType: taxType,
       date,
       dueDate,
-      items,
-      subtotal: subtotal,
-      totalCgst: totalCgst,
-      totalSgst: totalSgst,
-      totalIgst: totalIgst,
-      gstEnabled: gstEnabled && items.some(i => (i.gstRate || 0) > 0),
-      total: calculateTotal(),
+      items: cleanedItems,
+      subtotal: Math.round(subtotal * 100) / 100,
+      totalCgst: Math.round(totalCgst * 100) / 100,
+      totalSgst: Math.round(totalSgst * 100) / 100,
+      totalIgst: Math.round(totalIgst * 100) / 100,
+      gstEnabled: gstEnabled && cleanedItems.some(i => (i.gstRate || 0) > 0),
+      total: Math.round(calculateTotal() * 100) / 100,
       status: status
     };
 
