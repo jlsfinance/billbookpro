@@ -105,15 +105,24 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
              }
         }
         item.rate = rateToUse;
+        item.baseAmount = item.quantity * item.rate;
         if (gstEnabled) {
           calculateTaxes(item, supplier, customer);
+        } else {
+          item.totalAmount = item.baseAmount;
         }
       }
     } else if (field === 'quantity' || field === 'rate') {
       if (field === 'quantity') item.quantity = Number(value);
       if (field === 'rate') item.rate = Number(value);
+      
+      // Always update baseAmount
+      item.baseAmount = item.quantity * item.rate;
+      
       if (gstEnabled) {
         calculateTaxes(item, supplier, customer);
+      } else {
+        item.totalAmount = item.baseAmount;
       }
     } else if (field === 'gstRate') {
       item.gstRate = Number(value);
