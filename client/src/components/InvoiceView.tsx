@@ -62,7 +62,8 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
         address: firebaseCompany.address || '',
         phone: firebaseCompany.phone || '',
         email: firebaseCompany.email || '',
-        gst: firebaseCompany.gst || ''
+        state: firebaseCompany.state || '',
+        gstin: firebaseCompany.gstin || ''
       });
     } else {
       setCompany(StorageService.getCompanyProfile());
@@ -392,7 +393,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
         ly += 10;
 
         // Ledger Table Header
-        doc.setFillColor(240);
+        doc.setFillColor(240, 240, 240);
         doc.rect(leftMargin, ly - 6, rightMargin - leftMargin, 8, 'F');
         doc.setFont("helvetica", "bold");
         doc.text("Date", leftMargin + 2, ly);
@@ -610,9 +611,29 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
                 <span className="font-medium">Rs. {invoice.subtotal.toFixed(2)}</span>
               </div>
               {invoice.gstEnabled && ((invoice.totalCgst || 0) + (invoice.totalSgst || 0) + (invoice.totalIgst || 0)) > 0 && (
-                <div className="flex justify-between py-1 border-b border-gray-200 text-sm">
-                  <span className="font-medium text-green-600">Total Tax:</span>
-                  <span className="font-medium text-green-600">Rs. {((invoice.totalCgst || 0) + (invoice.totalSgst || 0) + (invoice.totalIgst || 0)).toFixed(2)}</span>
+                <div>
+                  {(invoice.totalCgst || 0) > 0 && (
+                    <div className="flex justify-between py-1 border-b border-gray-200 text-sm">
+                      <span className="font-medium text-gray-600">CGST (9%):</span>
+                      <span className="font-medium">Rs. {(invoice.totalCgst || 0).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {(invoice.totalSgst || 0) > 0 && (
+                    <div className="flex justify-between py-1 border-b border-gray-200 text-sm">
+                      <span className="font-medium text-gray-600">SGST (9%):</span>
+                      <span className="font-medium">Rs. {(invoice.totalSgst || 0).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {(invoice.totalIgst || 0) > 0 && (
+                    <div className="flex justify-between py-1 border-b border-gray-200 text-sm">
+                      <span className="font-medium text-gray-600">IGST (18%):</span>
+                      <span className="font-medium">Rs. {(invoice.totalIgst || 0).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-1 border-b border-gray-200 text-sm">
+                    <span className="font-medium text-green-600 font-bold">Total Tax ({(invoice.gstEnabled ? ((invoice.totalCgst || 0) > 0 ? '18%' : '18%') : '0%')}):</span>
+                    <span className="font-medium text-green-600 font-bold">Rs. {((invoice.totalCgst || 0) + (invoice.totalSgst || 0) + (invoice.totalIgst || 0)).toFixed(2)}</span>
+                  </div>
                 </div>
               )}
               <div className={`flex justify-between py-2 ${showPreviousBalance ? 'border-b border-gray-200' : 'border-b border-black'} text-lg`}>
