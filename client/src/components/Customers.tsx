@@ -42,6 +42,18 @@ const Customers: React.FC<CustomersProps> = ({ onEditInvoice }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Add Customer Modal State
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    address: '',
+    state: '',
+    gstin: ''
+  });
+
   useEffect(() => {
     setCustomers(StorageService.getCustomers());
     // Set default date range for statement (current month)
@@ -548,18 +560,6 @@ const Customers: React.FC<CustomersProps> = ({ onEditInvoice }) => {
       </div>
     );
   }
-
-  // Add Customer States
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    name: '',
-    company: '',
-    email: '',
-    phone: '',
-    address: '',
-    state: '',
-    gstin: ''
-  });
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
