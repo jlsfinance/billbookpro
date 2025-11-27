@@ -28,8 +28,8 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   // New State for Payment Mode
   const [paymentMode, setPaymentMode] = useState<'CREDIT' | 'CASH'>('CREDIT');
 
-  // Round Up State
-  const [roundUpTo, setRoundUpTo] = useState<0 | 10 | 100>(0);
+  // Round Up State - Use company's default round-up
+  const [roundUpTo, setRoundUpTo] = useState<0 | 10 | 100>(company?.roundUpDefault ?? 0);
 
   // Inline Creation States
   const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -536,42 +536,13 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
            </div>
         </div>
 
-        {/* Round Up Selection */}
-        <div className="border-t pt-6 mb-8">
-          <label className="block text-sm font-medium text-slate-700 mb-3">Round Up Total</label>
-          <div className="flex gap-4">
-            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${roundUpTo === 0 ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-              <input 
-                type="radio" 
-                name="roundUp" 
-                value="0"
-                checked={roundUpTo === 0}
-                onChange={() => setRoundUpTo(0)}
-              />
-              <span>No Rounding</span>
-            </label>
-            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${roundUpTo === 10 ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-              <input 
-                type="radio" 
-                name="roundUp" 
-                value="10"
-                checked={roundUpTo === 10}
-                onChange={() => setRoundUpTo(10)}
-              />
-              <span>Round to ₹10</span>
-            </label>
-            <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${roundUpTo === 100 ? 'bg-blue-50 border-blue-200 text-blue-700 ring-1 ring-blue-200' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}>
-              <input 
-                type="radio" 
-                name="roundUp" 
-                value="100"
-                checked={roundUpTo === 100}
-                onChange={() => setRoundUpTo(100)}
-              />
-              <span>Round to ₹100</span>
-            </label>
+        {/* Round Up Info - Show if company has default round-up set */}
+        {roundUpTo > 0 && (
+          <div className="border-t pt-6 mb-8 text-center text-sm text-blue-600">
+            <p className="font-medium">💰 Automatic Round Up: ₹{roundUpTo}</p>
+            <p className="text-xs text-slate-500 mt-1">This invoice will be rounded to the nearest ₹{roundUpTo} (as per your company settings)</p>
           </div>
-        </div>
+        )}
 
         <div className="flex justify-end gap-3 mt-8">
           <button

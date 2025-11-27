@@ -227,6 +227,42 @@ const Settings: React.FC = () => {
                     </div>
                   </>
                 )}
+
+                {/* Default Round Up Settings */}
+                <div className="mt-6 pt-6 border-t">
+                  <label className="block text-sm font-medium text-slate-700 mb-3">Default Round Up for All Bills</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="roundUp" 
+                        checked={roundUpDefault === 0}
+                        onChange={() => setRoundUpDefault(0)}
+                      />
+                      <span className="text-sm font-medium text-slate-700">No Rounding</span>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="roundUp" 
+                        checked={roundUpDefault === 10}
+                        onChange={() => setRoundUpDefault(10)}
+                      />
+                      <span className="text-sm font-medium text-slate-700">Round to ₹10</span>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="roundUp" 
+                        checked={roundUpDefault === 100}
+                        onChange={() => setRoundUpDefault(100)}
+                      />
+                      <span className="text-sm font-medium text-slate-700">Round to ₹100</span>
+                    </label>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">This setting applies to all new invoices automatically</p>
+                </div>
+
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
