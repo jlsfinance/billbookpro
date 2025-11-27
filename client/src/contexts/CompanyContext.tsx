@@ -10,6 +10,8 @@ interface CompanyData {
   gst_enabled: boolean;
   phone?: string;
   email?: string;
+  show_hsn_summary?: boolean;
+  roundUpDefault?: 0 | 10 | 100;
 }
 
 interface CompanyContextType {
