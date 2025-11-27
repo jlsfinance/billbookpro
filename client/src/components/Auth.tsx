@@ -54,7 +54,10 @@ export const Auth = () => {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
           BillFlow
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-600">
+        <p className="mt-1 text-center text-xs text-blue-600 font-semibold">
+          by Lavneet Rathi
+        </p>
+        <p className="mt-3 text-center text-sm text-slate-600">
           {isLogin ? 'Sign in to your account' : 'Create a new account'}
         </p>
       </div>
