@@ -7,10 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 interface SidebarProps {
   currentView: ViewState;
   onChangeView: (view: ViewState) => void;
+  onRecognizeBill?: () => void;
   isCloudConnected?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isCloudConnected = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onRecognizeBill, isCloudConnected = false }) => {
   const { signOut } = useAuth();
 
   const navItems = [
@@ -63,6 +64,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isCloudCon
               {item.label === 'Home' ? 'Dashboard' : item.label === 'Stock' ? 'Inventory' : item.label === 'People' ? 'Customers' : item.label === 'Create' ? 'New Invoice' : item.label}
             </button>
           ))}
+          <button
+            onClick={() => onRecognizeBill?.()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors mt-4"
+            title="Recognize bill from photo/PDF"
+            data-testid="button-recognize-bill"
+          >
+            <Upload className="w-5 h-5" />
+            Recognize Bill
+          </button>
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-3">
@@ -95,6 +105,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isCloudCon
               <span className="text-[10px] font-medium">{item.label}</span>
             </button>
           ))}
+          <button
+            onClick={() => onRecognizeBill?.()}
+            className="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-slate-400 hover:text-blue-400 transition-colors"
+            title="Recognize bill"
+            data-testid="button-recognize-bill-mobile"
+          >
+            <Upload className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Recognize</span>
+          </button>
           <button
             onClick={handleLogout}
             className="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-slate-400 hover:text-red-400 transition-colors"
