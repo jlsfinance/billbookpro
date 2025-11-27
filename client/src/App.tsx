@@ -7,6 +7,7 @@ import Inventory from './components/Inventory';
 import Customers from './components/Customers';
 import Settings from './components/Settings';
 import Daybook from './components/Daybook';
+import Import from './components/Import';
 import { ViewState, Invoice } from './types';
 import { StorageService } from './services/storageService';
 import { FirebaseService } from './services/firebaseService';

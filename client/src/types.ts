@@ -9,6 +9,7 @@ export enum ViewState {
   VIEW_INVOICE = 'VIEW_INVOICE',
   SETTINGS = 'SETTINGS',
   DAYBOOK = 'DAYBOOK',
+  IMPORT = 'IMPORT',
 }
 
 export interface FirebaseConfig {
