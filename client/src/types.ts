@@ -94,6 +94,8 @@ export interface Invoice {
   totalSgst?: number;
   totalIgst?: number;
   gstEnabled?: boolean;
+  roundUpTo?: 0 | 10 | 100; // 0 = no rounding, 10 = round to nearest 10, 100 = round to nearest 100
+  roundUpAmount?: number; // Amount added by rounding (calculated, not user set)
   total: number;
   status: 'PAID' | 'PENDING' | 'OVERDUE';
 }

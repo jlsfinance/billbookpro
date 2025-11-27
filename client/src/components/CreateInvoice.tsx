@@ -28,6 +28,9 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
   // New State for Payment Mode
   const [paymentMode, setPaymentMode] = useState<'CREDIT' | 'CASH'>('CREDIT');
 
+  // Round Up State
+  const [roundUpTo, setRoundUpTo] = useState<0 | 10 | 100>(0);
+
   // Inline Creation States
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -152,6 +155,17 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onSave, onCancel, initial
     const sgst = calculateTotalSGST();
     const igst = calculateTotalIGST();
     return subtotal + cgst + sgst + igst;
+  };
+
+  const calculateRoundedTotal = () => {
+    const total = calculateTotal();
+    if (roundUpTo === 0) return total;
+    return Math.ceil(total / roundUpTo) * roundUpTo;
+  };
+
+  const getRoundUpAmount = () => {
+    if (roundUpTo === 0) return 0;
+    return calculateRoundedTotal() - calculateTotal();
   };
 
   // --- Inline Creation Handlers ---
