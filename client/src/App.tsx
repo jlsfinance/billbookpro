@@ -29,6 +29,7 @@ const AppContent: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     const initApp = async () => {
@@ -260,7 +261,11 @@ const AppContent: React.FC = () => {
         currentView={currentView} 
         onChangeView={(view) => {
           if (view === ViewState.CREATE_INVOICE) setInvoiceToEdit(null);
-          setCurrentView(view);
+          if (view === ViewState.IMPORT) {
+            setShowImport(true);
+          } else {
+            setCurrentView(view);
+          }
         }}
         isCloudConnected={isCloudConnected || !!user} // Show cloud connected if logged in
       />
@@ -297,6 +302,17 @@ const AppContent: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Import Modal */}
+      {showImport && (
+        <Import 
+          onClose={() => setShowImport(false)}
+          onImportComplete={() => {
+            setInvoices(StorageService.getInvoices());
+            setCurrentView(ViewState.INVENTORY);
+          }}
+        />
+      )}
     </div>
   );
 };
