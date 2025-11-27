@@ -163,15 +163,15 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
       doc.text(`Ph: ${company.phone} | ${company.email}`, a4Width / 2, yPos, { align: "center" });
       yPos += 4;
       
-      // Company GSTIN (if GST enabled)
-      if (invoice.gstEnabled && (company.gstin || company.gst)) {
+      // Company GSTIN (if GST enabled) - Debug check
+      if (invoice.gstEnabled && company && (company.gstin || company.gst)) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
-        doc.setTextColor(34, 197, 94);
+        doc.setTextColor(34, 197, 94); // Green color
         const gstin = company.gstin || company.gst || '';
         doc.text(`GSTIN: ${gstin}`, a4Width / 2, yPos, { align: "center" });
         yPos += 4;
-        doc.setTextColor(80);
+        doc.setTextColor(0); // Reset to black
       }
       yPos += 2;
 
@@ -382,7 +382,10 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
         yPos += 6;
 
         const hsnSummary = getHSNSummary(invoice, company);
-        const isInterState = invoice.taxType === 'INTER_STATE' || company.state !== invoice.customerState;
+        // Determine if inter-state: True only if explicitly INTER_STATE or if customer state is DIFFERENT from company state
+        // If states are not set or are the same, treat as intra-state (CGST/SGST)
+        const isInterState = invoice.taxType === 'INTER_STATE' || 
+          (invoice.customerState && company.state && invoice.customerState !== company.state);
         
         // Tally-style column positions
         const col = {
