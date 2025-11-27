@@ -43,6 +43,7 @@ const Settings: React.FC = () => {
         });
         setGstEnabled(company.gst_enabled ?? true);
         setGstNumber(company.gst || '');
+        setShowHSNSummary(company.show_hsn_summary ?? true);
         setRoundUpDefault(company.roundUpDefault ?? 0);
     } else {
         // Fallback to local storage
