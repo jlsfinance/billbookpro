@@ -105,7 +105,9 @@ export interface CompanyProfile {
   email: string;
   state?: string;
   gstin?: string;
+  gst?: string;
   gst_enabled?: boolean;
+  show_hsn_summary?: boolean;
 }
 
 // Mock Data Defaults

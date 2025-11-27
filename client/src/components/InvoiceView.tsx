@@ -164,11 +164,12 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
       yPos += 4;
       
       // Company GSTIN (if GST enabled)
-      if (invoice.gstEnabled && company.gstin) {
+      if (invoice.gstEnabled && (company.gstin || company.gst)) {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.setTextColor(34, 197, 94);
-        doc.text(`GSTIN: ${company.gstin}`, a4Width / 2, yPos, { align: "center" });
+        const gstin = company.gstin || company.gst || '';
+        doc.text(`GSTIN: ${gstin}`, a4Width / 2, yPos, { align: "center" });
         yPos += 4;
         doc.setTextColor(80);
       }
@@ -381,7 +382,7 @@ const InvoiceView: React.FC<InvoiceViewProps> = ({ invoice, onBack, onEdit }) =>
         yPos += 6;
 
         const hsnSummary = getHSNSummary(invoice, company);
-        const isInterState = invoice.supplierState !== invoice.buyerState;
+        const isInterState = invoice.taxType === 'INTER_STATE' || company.state !== invoice.customerState;
         
         // Tally-style column positions
         const col = {
