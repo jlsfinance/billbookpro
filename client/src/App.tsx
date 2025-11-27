@@ -8,7 +8,6 @@ import Customers from './components/Customers';
 import Settings from './components/Settings';
 import Daybook from './components/Daybook';
 import Import from './components/Import';
-import RecognizeBill from './components/RecognizeBill';
 import { ViewState, Invoice } from './types';
 import { StorageService } from './services/storageService';
 import { FirebaseService } from './services/firebaseService';
@@ -31,7 +30,6 @@ const AppContent: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showRecognizeBill, setShowRecognizeBill] = useState(false);
 
   useEffect(() => {
     const initApp = async () => {
@@ -271,7 +269,6 @@ const AppContent: React.FC = () => {
             setCurrentView(view);
           }
         }}
-        onRecognizeBill={() => setShowRecognizeBill(true)}
         isCloudConnected={isCloudConnected || !!user} // Show cloud connected if logged in
       />
       
@@ -315,37 +312,6 @@ const AppContent: React.FC = () => {
           onImportComplete={() => {
             setInvoices(StorageService.getInvoices());
             setCurrentView(ViewState.INVENTORY);
-          }}
-        />
-      )}
-
-      {/* Recognize Bill Modal */}
-      {showRecognizeBill && (
-        <RecognizeBill 
-          onClose={() => setShowRecognizeBill(false)}
-          onExtract={(data) => {
-            // Add customers
-            data.customers.forEach(customer => {
-              StorageService.saveCustomer(customer);
-            });
-            // Open create invoice with extracted items
-            StorageService.saveInvoice({
-              id: Math.random().toString(36).substr(2, 9),
-              invoiceNumber: `INV-${Date.now()}`,
-              customerId: data.customers[0]?.id || '',
-              customerName: data.customers[0]?.name || '',
-              customerAddress: data.customers[0]?.address || '',
-              customerState: data.customers[0]?.state || '',
-              customerGstin: data.customers[0]?.gstin || '',
-              date: new Date().toISOString().split('T')[0],
-              dueDate: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
-              items: data.items,
-              subtotal: data.items.reduce((sum, item) => sum + item.baseAmount, 0),
-              total: data.items.reduce((sum, item) => sum + (item.totalAmount || 0), 0),
-              status: 'PENDING'
-            });
-            setInvoices(StorageService.getInvoices());
-            setShowRecognizeBill(false);
           }}
         />
       )}
