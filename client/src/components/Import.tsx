@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { Product, Customer } from '../types';
+import { useCompany } from '@/contexts/CompanyContext';
 import * as XLSX from 'xlsx';
 
 interface ImportProps {
@@ -10,6 +11,7 @@ interface ImportProps {
 }
 
 const Import: React.FC<ImportProps> = ({ onClose, onImportComplete }) => {
+  const { company } = useCompany();
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{type: 'idle' | 'success' | 'error', message: string}>({type: 'idle', message: ''});
   const [importStats, setImportStats] = useState({products: 0, customers: 0});
@@ -32,8 +34,8 @@ const Import: React.FC<ImportProps> = ({ onClose, onImportComplete }) => {
               price: parseFloat(row['Price'] || row['Rate'] || 0),
               stock: parseInt(row['Stock'] || row['Quantity'] || 0),
               category: row['Category'] || '',
-              hsn: row['HSN'] || row['HSN Code'] || '',
-              gstRate: parseFloat(row['GST Rate'] || row['GSTRATE'] || 0)
+              hsn: company?.gst_enabled ? (row['HSN'] || row['HSN Code'] || '') : '',
+              gstRate: company?.gst_enabled ? parseFloat(row['GST Rate'] || row['GSTRATE'] || 0) : 0
             }));
           }
 
@@ -47,8 +49,8 @@ const Import: React.FC<ImportProps> = ({ onClose, onImportComplete }) => {
               email: row['Email'] || '',
               phone: row['Phone'] || row['Mobile'] || '',
               address: row['Address'] || '',
-              state: row['State'] || '',
-              gstin: row['GSTIN'] || '',
+              state: company?.gst_enabled ? (row['State'] || '') : '',
+              gstin: company?.gst_enabled ? (row['GSTIN'] || '') : '',
               balance: 0,
               notifications: []
             }));
@@ -80,8 +82,8 @@ const Import: React.FC<ImportProps> = ({ onClose, onImportComplete }) => {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const name = item.getElementsByTagName('NAME')[0]?.textContent || '';
-        const hsn = item.getElementsByTagName('HSNCODE')[0]?.textContent || '';
-        const gstRate = parseFloat(item.getElementsByTagName('GSTRATE')[0]?.textContent || '0');
+        const hsn = company?.gst_enabled ? (item.getElementsByTagName('HSNCODE')[0]?.textContent || '') : '';
+        const gstRate = company?.gst_enabled ? parseFloat(item.getElementsByTagName('GSTRATE')[0]?.textContent || '0') : 0;
 
         if (name) {
           result.products.push({
@@ -102,8 +104,8 @@ const Import: React.FC<ImportProps> = ({ onClose, onImportComplete }) => {
         const ledger = ledgers[i];
         const name = ledger.getElementsByTagName('NAME')[0]?.textContent || '';
         const address = ledger.getElementsByTagName('ADDRESS')[0]?.textContent || '';
-        const state = ledger.getElementsByTagName('STATE')[0]?.textContent || '';
-        const gstin = ledger.getElementsByTagName('GSTIN')[0]?.textContent || '';
+        const state = company?.gst_enabled ? (ledger.getElementsByTagName('STATE')[0]?.textContent || '') : '';
+        const gstin = company?.gst_enabled ? (ledger.getElementsByTagName('GSTIN')[0]?.textContent || '') : '';
         const phone = ledger.getElementsByTagName('PHONE')[0]?.textContent || '';
         const email = ledger.getElementsByTagName('EMAIL')[0]?.textContent || '';
 
